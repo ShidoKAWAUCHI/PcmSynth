@@ -7,7 +7,7 @@
 */
 
 #include "../JuceLibraryCode/JuceHeader.h"
-
+//#include <JuceHeader.h>
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -19,24 +19,24 @@ public:
     //==============================================================================
     MainContentComponent()
     {
-		// MIDIKeyboadComponentクラスのインスタンスを作成. 引数には入力するMIDIデータを保持するオブジェクトを与える
-		keyboardComponent = new MidiKeyboardComponent(keyboardState, MidiKeyboardComponent::horizontalKeyboard);
+        // MIDIKeyboadComponentクラスのインスタンスを作成. 引数には入力するMIDIデータを保持するオブジェクトを与える
+        keyboardComponent = new MidiKeyboardComponent(keyboardState, MidiKeyboardComponent::horizontalKeyboard);
 
-		// MIDIKeyboadComponentを子オブジェクトとして配置・表示する
-		addAndMakeVisible(keyboardComponent);
+        // MIDIKeyboadComponentを子オブジェクトとして配置・表示する
+        addAndMakeVisible(keyboardComponent);
 
-		// ボタンコンポーネントを子オブジェクトとして配置・表示する
-		addAndMakeVisible(deviceSettingButton);
-		deviceSettingButton.setButtonText("Device Setting");
-		deviceSettingButton.addListener(this);
+        // ボタンコンポーネントを子オブジェクトとして配置・表示する
+        addAndMakeVisible(deviceSettingButton);
+        deviceSettingButton.setButtonText("Device Setting");
+        deviceSettingButton.addListener(this);
 
-		addAndMakeVisible(sampleSelectButton);
-		sampleSelectButton.setButtonText("Sample Select");
-		sampleSelectButton.addListener(this);
+        addAndMakeVisible(sampleSelectButton);
+        sampleSelectButton.setButtonText("Sample Select");
+        sampleSelectButton.addListener(this);
 
-		// AudioDeviceManagerクラスのインスタンス"deviceManager"に midiCollectorの参照を登録する
-		// deviceManagerは、基底クラス"AudioAppComponent"で定義されている
-		deviceManager.addMidiInputCallback(String(), &midiCollector);
+        // AudioDeviceManagerクラスのインスタンス"deviceManager"に midiCollectorの参照を登録する
+        // deviceManagerは、基底クラス"AudioAppComponent"で定義されている
+        deviceManager.addMidiInputCallback(String(), &midiCollector);
 
         setSize (800, 600);
 
@@ -60,11 +60,11 @@ public:
 
         // For more details, see the help for AudioProcessor::prepareToPlay()
 
-		//////////////////////////////////////////
-		midiCollector.reset(sampleRate);
+        //////////////////////////////////////////
+        midiCollector.reset(sampleRate);
 
-		synth.setCurrentPlaybackSampleRate(sampleRate);
-		//////////////////////////////////////////
+        synth.setCurrentPlaybackSampleRate(sampleRate);
+        //////////////////////////////////////////
     }
 
     void getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill) override
@@ -77,15 +77,15 @@ public:
         // (to prevent the output of random noise)
         bufferToFill.clearActiveBufferRegion();
 
-		////////////
-		// fill a midi buffer with incoming messages from the midi input.
-		MidiBuffer incomingMidi;
+        ////////////
+        // fill a midi buffer with incoming messages from the midi input.
+        MidiBuffer incomingMidi;
 
-		midiCollector.removeNextBlockOfMessages(incomingMidi, bufferToFill.numSamples);
+        midiCollector.removeNextBlockOfMessages(incomingMidi, bufferToFill.numSamples);
 
-		keyboardState.processNextMidiBuffer(incomingMidi, 0, bufferToFill.numSamples, true);
+        keyboardState.processNextMidiBuffer(incomingMidi, 0, bufferToFill.numSamples, true);
 
-		synth.renderNextBlock(*bufferToFill.buffer, incomingMidi, 0,  bufferToFill.numSamples);
+        synth.renderNextBlock(*bufferToFill.buffer, incomingMidi, 0,  bufferToFill.numSamples);
     }
 
     void releaseResources() override
@@ -110,92 +110,120 @@ public:
         // This is called when the MainContentComponent is resized.
         // If you add any child components, this is where you should
         // update their positions.
-		deviceSettingButton.setBoundsRelative(0.2, 0.2, 0.2, 0.2);
+        deviceSettingButton.setBoundsRelative(0.2, 0.2, 0.2, 0.2);
 
-		sampleSelectButton.setBoundsRelative(0.6, 0.2, 0.2, 0.2);
+        sampleSelectButton.setBoundsRelative(0.6, 0.2, 0.2, 0.2);
 
-		keyboardComponent->setBoundsRelative(0.0, 0.7, 1.0, 0.3);
+        keyboardComponent->setBoundsRelative(0.0, 0.7, 1.0, 0.3);
     }
 
-	// ボタンコンポーネントがクリックされたときのイベントハンドラ（コールバック関数）
-	void buttonClicked(Button* button) override
-	{
-		if (button == &deviceSettingButton)
-			showDeviceSetting();
-		else if (button == &sampleSelectButton)
-			setupPcmSynth();
-	}
+
+    void buttonClicked(Button* button) override
+    {
+        if (button == &deviceSettingButton)
+            showDeviceSetting();
+        else if (button == &sampleSelectButton)
+            setupPcmSynth();
+    }
 
 private:
     //==============================================================================
 
     // Your private member variables go here...
-	void showDeviceSetting() {
-		AudioDeviceSelectorComponent selector(deviceManager,
-			0, 256,
-			0, 256,
-			true, true,
-			true, false);
-		selector.setSize(400, 600);
+    void showDeviceSetting() {
+        AudioDeviceSelectorComponent selector(deviceManager,
+            0, 256,
+            0, 256,
+            true, true,
+            true, false);
+        selector.setSize(400, 600);
 
-		DialogWindow::LaunchOptions dialog;
-		dialog.content.setNonOwned(&selector);
-		dialog.dialogTitle = "Audio/MIDI Device Settings";
-		dialog.componentToCentreAround = this;
-		dialog.dialogBackgroundColour = getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
-		dialog.escapeKeyTriggersCloseButton = true;
-		dialog.useNativeTitleBar = false;
-		dialog.resizable = false;
-		dialog.useBottomRightCornerResizer = false;
-		dialog.runModal();
-	}
+        DialogWindow::LaunchOptions dialog;
+        dialog.content.setNonOwned(&selector);
+        dialog.dialogTitle = "Audio/MIDI Device Settings";
+        dialog.componentToCentreAround = this;
+        dialog.dialogBackgroundColour = getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
+        dialog.escapeKeyTriggersCloseButton = true;
+        dialog.useNativeTitleBar = false;
+        dialog.resizable = false;
+        dialog.useBottomRightCornerResizer = false;
+        dialog.runModal();
+    }
 
-	void setupPcmSynth() {
+    void setupPcmSynth() {
 
-		AudioFormatManager formatManager;
+        AudioFormatManager formatManager;
 
-		// サポートするファイルフォーマットを登録(JUCE標準対応)
-		formatManager.registerBasicFormats();
+        // サポートするファイルフォーマットを登録(JUCE標準対応)
+        formatManager.registerBasicFormats();
 
-		FileChooser chooser("Select a audio file to play...",
-			File(), formatManager.getWildcardForAllFormats());
+        FileChooser chooser("Select a audio file to play...",
+            File(), formatManager.getWildcardForAllFormats());
 
-		if (chooser.browseForFileToOpen())
-		{
-			File file(chooser.getResult());
+        //if (chooser.browseForFileToOpen())
+        if (chooser.browseForMultipleFilesToOpen())
+        {
+            File file(chooser.getResult());
+            Array <File> files = chooser.getResults();
+            //Array <File> files(chooser.getResults());
 
-			AudioFormatReader* reader = formatManager.createReaderFor(file);
+            AudioFormatReader* reader = formatManager.createReaderFor(files[0]);
+            AudioFormatReader* reader2 = formatManager.createReaderFor(files[1]);
+            BigInteger allNotes1;
+            BigInteger allNotes2;
+            allNotes1.setRange(0, 64, true);
+            allNotes2.setRange(64, 128, true);
+            //allNotes.setRange(0, 128, true);
 
-			// allow our sound to be played on all notes
-			BigInteger allNotes;
-			allNotes.setRange(0, 128, true);
+            synth.clearVoices();
+            synth.clearSounds();
 
-			synth.clearVoices();
-			synth.clearSounds();
 
-			// Monophonic
-			//synth.addVoice(new SamplerVoice());
+            // Polyphonic
+            for (int i = 0; i < 128; i++) {
+                synth.addVoice(new SamplerVoice());
+            }
 
-			// Polyphonic
-			for (int i = 0; i < 128; i++) {
-				synth.addVoice(new SamplerVoice());
-			}
+            // finally, add our sound
+            
+            synth.addSound(new SamplerSound("default", *reader, allNotes1, 60, 0, 0.1, 10.0));
+            synth.addSound(new SamplerSound("default", *reader2, allNotes2, 60, 0, 0.1, 10.0));
 
-			// finally, add our sound
-			synth.addSound(new SamplerSound("default", *reader, allNotes, 60, 0, 0.1, 10.0));
-		}
+                //synth.addSound(new SamplerSound("default", *reader, allNotes, 60, 0, 0.1, 10.0));
+            /*
+            SamplerSound::Ptr sound1 = new SamplerSound("default", *reader, allNotes1, 60, 0, 0.1, 10.0);
+            synth.addSound(sound1);
+            SamplerSound::Ptr sound2 = new SamplerSound("default", *reader, allNotes2, 60, 0, 0.1, 10.0);
+            synth.addSound(sound2);
+            */
+           
+        }
 
-	}
+        /*
+        File file("C:\JuceDev\JUCE\PcmSynth\C3.wav");
+        AudioFormatReader* reader = formatManager.createReaderFor(file);
+        BigInteger allNotes;
+        allNotes.setRange(0, 128, true);
 
-	Synthesiser synth;
+        synth.clearVoices();
+        synth.clearSounds();
+        for (int i = 0; i < 128; i++) {
+            synth.addVoice(new SamplerVoice());
+        }
+        synth.addSound(new SamplerSound("default", *reader, allNotes, 60, 0, 0.1, 10.0));
+        */
 
-	TextButton deviceSettingButton;
-	TextButton sampleSelectButton;
+    }
 
-	MidiMessageCollector midiCollector;
+    Synthesiser synth;
 
-	MidiKeyboardState keyboardState;              // MIDIデータをMIDIキーボードに最適なデータに変換して保持するクラス
-	MidiKeyboardComponent* keyboardComponent;     // MIDIKeyboadComponentクラスのポインタ
+    TextButton deviceSettingButton;
+    TextButton sampleSelectButton;
+
+    MidiMessageCollector midiCollector;
+
+    MidiKeyboardState keyboardState;              // MIDIデータをMIDIキーボードに最適なデータに変換して保持するクラス
+    MidiKeyboardComponent* keyboardComponent;     // MIDIKeyboadComponentクラスのポインタ
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)
 };

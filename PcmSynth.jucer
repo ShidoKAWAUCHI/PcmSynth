@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="Y4EMgw" name="PcmSynthTest" displaySplashScreen="1" reportAppUsage="0"
+<JUCERPROJECT id="Y4EMgw" name="PcmSynth" displaySplashScreen="1" reportAppUsage="0"
               splashScreenColour="Dark" projectType="guiapp" version="1.0.0"
               bundleIdentifier="com.yourcompany.PcmSynth" includeBinaryInAppConfig="1"
               cppLanguageStandard="11" companyCopyright="" jucerFormatVersion="1">
-  <MAINGROUP id="ZoPzKE" name="PcmSynthTest">
+  <MAINGROUP id="ZoPzKE" name="PcmSynth">
     <GROUP id="{BD5F52CF-C5C7-C4A4-4790-CE75F66C5110}" name="Source">
       <FILE id="vVTwGu" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
