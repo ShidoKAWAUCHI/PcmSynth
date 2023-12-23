@@ -275,6 +275,9 @@ public:
        jassert(juce::numElementsInArray(harmonics) == juce::numElementsInArray(harmonicWeights));
 
         //[3-2]”gŒ`‚ğì¬‚µ‚Ü‚·B
+
+
+
         for (auto harmonic = 0; harmonic < juce::numElementsInArray(harmonics); ++harmonic)
         {
             auto angleDelta = juce::MathConstants<double>::twoPi / (double)(tableSize - 1) * harmonics[harmonic];
