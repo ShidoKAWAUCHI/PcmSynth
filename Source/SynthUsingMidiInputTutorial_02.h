@@ -59,7 +59,9 @@ struct SineWaveSound   : public juce::SynthesiserSound
 //==============================================================================
 struct SineWaveVoice   : public juce::SynthesiserVoice
 {
-    SineWaveVoice() {}
+    SineWaveVoice(const juce::AudioSampleBuffer& wavetableToUse) : wavetable(wavetableToUse) {
+        jassert(wavetable.getNumChannels() == 1);
+    }
 
     bool canPlaySound (juce::SynthesiserSound* sound) override
     {
@@ -78,6 +80,8 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
         FREQ = cyclesPerSecond;
         BASE_FREQ = cyclesPerSecond;
         angleDelta = cyclesPerSample * 2.0 * juce::MathConstants<double>::pi;
+        tableSizeOverSampleRate = (float)wavetable.getNumSamples() / getSampleRate();
+        
     }
 
     void stopNote (float /*velocity*/, bool allowTailOff) override
@@ -114,12 +118,15 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
 
     void renderNextBlock (juce::AudioSampleBuffer& outputBuffer, int startSample, int numSamples) override
     {
+        tableDelta = FREQ * tableSizeOverSampleRate;
+        /*
         if (angleDelta != 0.0)
         {
             if (tailOff > 0.0) // [7]
             {
                 while (--numSamples >= 0)
                 {
+
                     auto currentSample = (float) (std::sin (currentAngle) * level * tailOff) ;
 
                     for (auto i = outputBuffer.getNumChannels(); --i >= 0;)
@@ -152,7 +159,77 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
                     ++startSample;
                 }
             }
+        }*/
+        
+        if (angleDelta != 0.0)
+        {
+            if (tailOff > 0.0) // [7]
+            {
+                while (--numSamples >= 0)
+                {
+                    //auto index = (int)currentAngle % wavetable.getNumSamples();
+                    auto tableSize = (unsigned int)wavetable.getNumSamples();
+
+                    auto index0 = (unsigned int)currentIndex;              // [6]
+                    auto index1 = index0 == (tableSize - 1) ? (unsigned int)0 : index0 + 1;
+                    auto frac = currentIndex - (float)index0;              // [7]
+
+                    auto* table = wavetable.getReadPointer(0);             // [8]
+                    auto value0 = table[index0];
+                    auto value1 = table[index1];
+
+                    auto currentSample = (value0 + frac * (value1 - value0))*level*tailOff; // [9]
+
+                    if ((currentIndex += tableDelta) > (float)tableSize)   // [10]
+                        currentIndex -= (float)tableSize;
+                    //auto currentSample = wavetable.getSample(0, index0) * level *tailOff;
+
+                    for (auto i = outputBuffer.getNumChannels(); --i >= 0;)
+                        outputBuffer.addSample(i, startSample, currentSample);
+
+                    currentAngle += angleDelta * pitchShift;
+                    ++startSample;
+                    tailOff *= 0.99; // [8]
+
+                    if (tailOff <= 0.005)
+                    {
+                        clearCurrentNote(); // [9]
+
+                        angleDelta = 0.0;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                while (--numSamples >= 0) // [6]
+                {
+                    //auto index = (int)currentAngle % wavetable.getNumSamples();
+                    //auto currentSample = wavetable.getSample(0, index) * level;
+                    auto tableSize = (unsigned int)wavetable.getNumSamples();
+
+                    auto index0 = (unsigned int)currentIndex;              // [6]
+                    auto index1 = index0 == (tableSize - 1) ? (unsigned int)0 : index0 + 1;
+                    auto frac = currentIndex - (float)index0;              // [7]
+
+                    auto* table = wavetable.getReadPointer(0);             // [8]
+                    auto value0 = table[index0];
+                    auto value1 = table[index1];
+
+                    auto currentSample = (value0 + frac * (value1 - value0))*level; // [9]
+
+                    if ((currentIndex += tableDelta) > (float)tableSize)   // [10]
+                        currentIndex -= (float)tableSize;
+
+                    for (auto i = outputBuffer.getNumChannels(); --i >= 0;)
+                        outputBuffer.addSample(i, startSample, currentSample);
+
+                    currentAngle += angleDelta * pitchShift;
+                    ++startSample;
+                }
+            }
         }
+      
     }
 
 private:
@@ -160,19 +237,62 @@ private:
     double FREQ = 0;
     double BASE_FREQ = 0;
     double pitchShift = 1.0;
+    double tableSizeOverSampleRate;
+    const juce::AudioSampleBuffer& wavetable;
+    float currentIndex = 0.0f,tableDelta=0.0f;
+ 
 };
 
-//==============================================================================
+//============================================================================
 class SynthAudioSource   : public juce::AudioSource
 {
 public:
     SynthAudioSource (juce::MidiKeyboardState& keyState)
         : keyboardState (keyState)
     {
-        for (auto i = 0; i < 4; ++i)
-            synth.addVoice (new SineWaveVoice());
+        
+        // wavetableの生成（wavetableSizeは適切なサイズに置き換える必要があります）
+        const int wavetableSize = 1024; // 例として1024サイズのwavetableを作成
+        juce::AudioSampleBuffer wavetableBuffer(1, wavetableSize);
 
+        sineTable.setSize(1, (int)tableSize);
+        sineTable.clear();
+        auto* samples = sineTable.getWritePointer(0);                                   // [3]
+        /*
+        auto angleDelta = juce::MathConstants<double>::twoPi / (double)(tableSize - 1); // [4]
+        auto currentAngle = 0.0;
+
+        for (unsigned int i = 0; i < tableSize; ++i)
+        {
+            auto sample = std::sin(currentAngle);                                       // [5]
+            samples[i] = (float)sample;
+            currentAngle += angleDelta;
+        }
+        */
+        int harmonics[] = { 1,3,5,7,9};
+        float harmonicWeights[] = { 0.5f, 0.1f, 0.05f, 0.125f, 0.09f, 0.005f, 0.002f, 0.001f };
+
+       jassert(juce::numElementsInArray(harmonics) == juce::numElementsInArray(harmonicWeights));
+
+        //[3-2]波形を作成します。
+        for (auto harmonic = 0; harmonic < juce::numElementsInArray(harmonics); ++harmonic)
+        {
+            auto angleDelta = juce::MathConstants<double>::twoPi / (double)(tableSize - 1) * harmonics[harmonic];
+            auto currentAngle = 0.0;
+
+            for (unsigned int i = 0; i < tableSize; ++i)
+            {
+                auto sample = std::sin(currentAngle);
+                samples[i] += (float)sample * harmonicWeights[harmonic];
+               // samples[i] += (float)sample ;
+                currentAngle += angleDelta;
+            }
+        }
+
+        for (auto i = 0; i < 4; ++i)
+            synth.addVoice (new SineWaveVoice(sineTable));
         synth.addSound (new SineWaveSound());
+        
     }
 
     void setUsingSineWaveSound()
@@ -212,6 +332,11 @@ private:
     juce::MidiKeyboardState& keyboardState;
     juce::Synthesiser synth;
     juce::MidiMessageCollector midiCollector;
+
+    juce::AudioSampleBuffer sineTable;
+    //const unsigned int tableSize = 1 << 7;
+    const unsigned int tableSize = 1024;
+
 };
 
 //==============================================================================
@@ -252,7 +377,7 @@ public:
 
         addAndMakeVisible (keyboardComponent);
         setAudioChannels (0, 2);
-
+        //createWavetable();
         setSize (600, 190);
         startTimer (400);
     }
@@ -312,6 +437,7 @@ private:
     juce::MidiKeyboardState keyboardState;
     SynthAudioSource synthAudioSource;
     juce::MidiKeyboardComponent keyboardComponent;
+
 
     juce::ComboBox midiInputList;
     juce::Label midiInputListLabel;
