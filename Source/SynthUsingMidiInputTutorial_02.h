@@ -99,18 +99,18 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
     }
 
     void pitchWheelMoved (int newPitchWheelValue) override      {
-        double wheelPos = ((float)newPitchWheelValue - 8192.0f) / 8192.0f; // ƒsƒbƒ`ƒzƒC[ƒ‹‚Ì’l‚ğ-1.0‚©‚ç1.0‚Ì”ÍˆÍ‚É³‹K‰»
-        double semitones = wheelPos * 2.0; // ”ÍˆÍ‚ğ2”¼‰¹i‘S‰¹j•ª‚É‚·‚é
-        pitchShift = std::pow(2.0, semitones / 12.0); // ”{‰¹”ä‚É•ÏŠ·‚µ‚Äƒsƒbƒ`ƒVƒtƒg—Ê‚ğŒvZ
+        double wheelPos = ((float)newPitchWheelValue - 8192.0f) / 8192.0f; // Æ’sÆ’bÆ’`Æ’zÆ’C[Æ’â€¹â€šÃŒâ€™lâ€šÃ°-1.0â€šÂ©â€šÃ§1.0â€šÃŒâ€ÃË†Ãâ€šÃ‰Â³â€¹Kâ€°Â»
+        double semitones = wheelPos * 2.0; // â€ÃË†Ãâ€šÃ°2â€Â¼â€°Â¹iâ€˜Sâ€°Â¹jâ€¢Âªâ€šÃ‰â€šÂ·â€šÃ©
+        pitchShift = std::pow(2.0, semitones / 12.0); // â€{â€°Â¹â€Ã¤â€šÃ‰â€¢ÃÅ Â·â€šÂµâ€šÃ„Æ’sÆ’bÆ’`Æ’VÆ’tÆ’gâ€”ÃŠâ€šÃ°Å’vÅ½Z
         FREQ = BASE_FREQ * pitchShift;
     }
 
     void aftertouchChanged(int newAftertouchValue) override
     {
-        float aftertoutchPos = static_cast<float>(newAftertouchValue) / 127.0f; // ƒAƒtƒ^[ƒ^ƒbƒ`‚Ì’l‚ğ-1.0‚©‚ç1.0‚Ì”ÍˆÍ‚É³‹K‰»
-        double semitones = aftertoutchPos * 2.0; // ”ÍˆÍ‚ğ2”¼‰¹i‘S‰¹j•ª‚É‚·‚é
-        pitchShift = std::pow(2.0, semitones / 12.0); // ”{‰¹”ä‚É•ÏŠ·‚µ‚Äƒsƒbƒ`ƒVƒtƒg—Ê‚ğŒvZ
-        FREQ = BASE_FREQ * pitchShift; //ƒsƒbƒ`ƒVƒtƒg‚ğü”g”‚É“K—p
+        float aftertoutchPos = static_cast<float>(newAftertouchValue) / 127.0f; // Æ’AÆ’tÆ’^[Æ’^Æ’bÆ’`â€šÃŒâ€™lâ€šÃ°-1.0â€šÂ©â€šÃ§1.0â€šÃŒâ€ÃË†Ãâ€šÃ‰Â³â€¹Kâ€°Â»
+        double semitones = aftertoutchPos * 2.0; // â€ÃË†Ãâ€šÃ°2â€Â¼â€°Â¹iâ€˜Sâ€°Â¹jâ€¢Âªâ€šÃ‰â€šÂ·â€šÃ©
+        pitchShift = std::pow(2.0, semitones / 12.0); // â€{â€°Â¹â€Ã¤â€šÃ‰â€¢ÃÅ Â·â€šÂµâ€šÃ„Æ’sÆ’bÆ’`Æ’VÆ’tÆ’gâ€”ÃŠâ€šÃ°Å’vÅ½Z
+        FREQ = BASE_FREQ * pitchShift; //Æ’sÆ’bÆ’`Æ’VÆ’tÆ’gâ€šÃ°Å½Ã¼â€gâ€â€šÃ‰â€œKâ€”p
 
     }
 
@@ -119,7 +119,7 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
     void renderNextBlock (juce::AudioSampleBuffer& outputBuffer, int startSample, int numSamples) override
     {
         tableDelta = FREQ * tableSizeOverSampleRate;
-        /*
+        
         if (angleDelta != 0.0)
         {
             if (tailOff > 0.0) // [7]
@@ -127,7 +127,9 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
                 while (--numSamples >= 0)
                 {
 
-                    auto currentSample = (float) (std::sin (currentAngle) * level * tailOff) ;
+                    //auto currentSample = (float) (std::sin (currentAngle) * level * tailOff) ;
+                    auto currentSample = (4500 * (exp(-0.8 * numSamples) - exp(-200 * numSamples))) * level;
+
 
                     for (auto i = outputBuffer.getNumChannels(); --i >= 0;)
                         outputBuffer.addSample (i, startSample, currentSample);
@@ -150,7 +152,8 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
             {
                 while (--numSamples >= 0) // [6]
                 {
-                    auto currentSample = (float) (std::sin (currentAngle) * level);
+                    //auto currentSample = (float) (std::sin (currentAngle) * level);
+                    auto currentSample = (4500*(exp(-0.8*numSamples)-exp(-200*numSamples))) * std::sin(currentAngle) ;
 
                     for (auto i = outputBuffer.getNumChannels(); --i >= 0;)
                         outputBuffer.addSample (i, startSample, currentSample);
@@ -159,15 +162,16 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
                     ++startSample;
                 }
             }
-        }*/
+        }
         
+        /*
         if (angleDelta != 0.0)
         {
             if (tailOff > 0.0) // [7]
             {
                 while (--numSamples >= 0)
                 {
-                    //auto index = (int)currentAngle % wavetable.getNumSamples();
+
                     auto tableSize = (unsigned int)wavetable.getNumSamples();
 
                     auto index0 = (unsigned int)currentIndex;              // [6]
@@ -229,7 +233,7 @@ struct SineWaveVoice   : public juce::SynthesiserVoice
                 }
             }
         }
-      
+      */
     }
 
 private:
@@ -248,35 +252,29 @@ class SynthAudioSource   : public juce::AudioSource
 {
 public:
     SynthAudioSource (juce::MidiKeyboardState& keyState)
-        : keyboardState (keyState)
+        : keyboardState (keyState),
+        h1(0.5f),h2(0.1f),h3(0.005f)
     {
         
-        // wavetable‚Ì¶¬iwavetableSize‚Í“KØ‚ÈƒTƒCƒY‚É’u‚«Š·‚¦‚é•K—v‚ª‚ ‚è‚Ü‚·j
-        const int wavetableSize = 1024; // —á‚Æ‚µ‚Ä1024ƒTƒCƒY‚Ìwavetable‚ğì¬
+        // wavetableâ€šÃŒÂ¶Â¬iwavetableSizeâ€šÃâ€œKÃ˜â€šÃˆÆ’TÆ’CÆ’Yâ€šÃ‰â€™uâ€šÂ«Å Â·â€šÂ¦â€šÃ©â€¢Kâ€”vâ€šÂªâ€šÂ â€šÃ¨â€šÃœâ€šÂ·j
+        const int wavetableSize = 1024; // â€”Ã¡â€šÃ†â€šÂµâ€šÃ„1024Æ’TÆ’CÆ’Yâ€šÃŒwavetableâ€šÃ°Ã¬Â¬
         juce::AudioSampleBuffer wavetableBuffer(1, wavetableSize);
 
         sineTable.setSize(1, (int)tableSize);
         sineTable.clear();
         auto* samples = sineTable.getWritePointer(0);                                   // [3]
-        /*
-        auto angleDelta = juce::MathConstants<double>::twoPi / (double)(tableSize - 1); // [4]
-        auto currentAngle = 0.0;
-
-        for (unsigned int i = 0; i < tableSize; ++i)
-        {
-            auto sample = std::sin(currentAngle);                                       // [5]
-            samples[i] = (float)sample;
-            currentAngle += angleDelta;
-        }
-        */
-        int harmonics[] = { 1,3,5,7,9};
-        float harmonicWeights[] = { 0.5f, 0.1f, 0.05f, 0.125f, 0.09f, 0.005f, 0.002f, 0.001f };
-
-       jassert(juce::numElementsInArray(harmonics) == juce::numElementsInArray(harmonicWeights));
-
-        //[3-2]”gŒ`‚ğì¬‚µ‚Ü‚·B
+       //float h1 = 0.5f;
+        //float h2 = 0.1f;
+        //float h3 = 0.005f;
+        int harmonics[] = { 1,3,5};
+        //int harmonics[] = { 1,3,5,7,9,11,13};
+        //float harmonicWeights[] = { 0.5f, 0.1f, 0.05f, 0.125f, 0.09f, 0.005f, 0.002f, 0.001f };
+        //float harmonicWeights[] = { 0,0,0,0,0,0,0};
+        float harmonicWeights[] = { 0.5f, 0.1f, 0.05f};
 
 
+
+        jassert(juce::numElementsInArray(harmonics) == juce::numElementsInArray(harmonicWeights));
 
         for (auto harmonic = 0; harmonic < juce::numElementsInArray(harmonics); ++harmonic)
         {
@@ -286,8 +284,7 @@ public:
             for (unsigned int i = 0; i < tableSize; ++i)
             {
                 auto sample = std::sin(currentAngle);
-                samples[i] += (float)sample * harmonicWeights[harmonic];
-               // samples[i] += (float)sample ;
+                samples[i] += (float)sample * harmonicWeights[harmonic];;
                 currentAngle += angleDelta;
             }
         }
@@ -297,6 +294,8 @@ public:
         synth.addSound (new SineWaveSound());
         
     }
+
+
 
     void setUsingSineWaveSound()
     {
@@ -339,6 +338,8 @@ private:
     juce::AudioSampleBuffer sineTable;
     //const unsigned int tableSize = 1 << 7;
     const unsigned int tableSize = 1024;
+
+    float h1, h2, h3;
 
 };
 
